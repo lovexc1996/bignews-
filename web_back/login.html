@@ -6,10 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>大事件-后台登录页</title>
+    <link rel="stylesheet" href="js/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/reset.css">
     <link rel="stylesheet" type="text/css" href="css/iconfont.css">
     <link rel="stylesheet" type="text/css" href="css/main.css">
     <script src="./js/jquery-1.12.4.min.js"></script>
+    <script src="./js/./bootstrap/js/bootstrap.min.js"></script>
 </head>
 
 <body>
@@ -30,53 +32,92 @@
             </form>
         </div>
 
-    </div> 
-
+    </div>
+    <!-- bootstrap 模态框的html 代码 -->
+    <div id="myModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">系统提示</h4>
+                </div>
+                <div class="modal-body">
+                    <!-- <p>One fine body&hellip;</p> -->
+                    <!-- 提示内容区域 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">确定</button>
+                    <!-- <button type="button" class="btn btn-primary" data-dismiss="modal">确定</button> -->
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 </body>
+
 <script>
+    /**
+     * @description:模态框 显示方法
+     * @param{string} msg - 显示内容
+     * @param{Function} func - 消息显示后要执行的回调函数
+     */
+    function showModel(msg, func) {
+        $('.modal-body').text(msg);
+        $('#myModal').modal({ keyboard: true })
+        // 如果第二个参数func存在,并为函数类型,则启动定时器
+        if (func && func instanceof Function) {
+            setTimeout(func, 2000);
+        }
+    }
+
+
+
     // 登录业务思路登录按钮 点击时 获取用户名和密码,异步提交到服务器对应的登录按钮
     // 1.导入 jq文件
     // 2.当 页面加载完成后,为登录按钮添加点击事件
     $(function () {
         $('.input_sub').click(function () {
             // 3.获取 用户名和密码
-            var userName = $('.input_txt').val().replace(/ /g,'');//拓展:用trim()也可以
-            var userPass = $('.input_pass').val().replace(/ /g,'');
+            var userName = $('.input_txt').val().replace(/ /g, '');//拓展:用trim()也可以
+            var userPass = $('.input_pass').val().replace(/ /g, '');
             // 3.1将去掉所有空格后的,用户名,重新设置给文本框
             $('.input_txt').val(userName);
             $('.input_pass').val(userPass);
             // 4.判断是否输入有误
-            if(userName.length < 5){
-                alert('用户名输入有误');
+            if (userName.length < 5) {
+                // alert('用户名输入有误');
+                showModel('用户名输入有误')
                 // 设置选中状态
                 $('.input_txt').focus();
-            }else if(userPass.length <5){
-                alert('密码输入有误');
+            } else if (userPass.length < 5) {
+                showModel('密码输入有误');
                 // 设置选中状态
                 $('.input_pass').focus();
-            }else{
-               $.ajax({
-                   url:'http://127.0.0.1:8080/admin/user/login',
-                   type:'post',
-                   data:{
-                       username:userName,
-                       password:userPass
-                   },
-                   success:function(backData){
-                    //    打印服务器返回的结果
-                    alert(backData);
-                    // 如果登录成功
-                    if(backData.code == 200){
-                        // 跳转到后台首页
-                        window.location = './index.html';
-                    }else{
-                        $('.input_txt').focus()
+            } else {
+                $.ajax({
+                    url: 'http://127.0.0.1:8080/admin/user/login',
+                    type: 'post',
+                    data: {
+                        username: userName,
+                        password: userPass
+                    },
+                    success: function (backData) {
+                        // 打印服务器返回的结果
+                        showModel(backData.msg, function () {
+                            // 如果登录成功
+                            if (backData.code == 200) {
+                                // 跳转到后台首页
+                                window.location = './index.html';
+                            } else {
+                                $('.input_txt').focus()
+                            }
+                        });
                     }
-                   }
-               })
+                })
             }
         })
     })
-    
+
 </script>
+
 </html>
