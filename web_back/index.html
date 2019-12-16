@@ -144,7 +144,7 @@
             // c.异步请求 退出接口 /admin/user/logout
             $.ajax({
                 url: 'http://127.0.0.1:8080/admin/user/logout',
-                type: 'post',
+                method: 'post',
                 success: function (backData) {
                     if (backData.code == 200) {
                         window.location = './login.html';
@@ -154,17 +154,26 @@
         })
         // 2.业务目标:登录成功跳转到index.html页面后,需要 异步 将登陆用户的信息 获取到,并设置到index.html页面对应的位置
         // a.页面加载完毕后,发送异步请求
-        $.ajax({
-            url: 'http://127.0.0.1:8080/admin/user/info',
-            type: 'get',
-            success: function (backData) {
-                if (backData.code == 200) {
-                    // 设置用户信息到页面上
-                    $('.user_info img').attr('scr', backData.data.userPic);
-                    $('.user_info span').html('欢迎&nbsp;&nbsp; -' + backData.data.nickname);
-                }
-            }
+        $(function () {
+            loadUserInfo();
         })
+        // b.异步请求函数
+        function loadUserInfo() {
+            $.ajax({
+                url: 'http://127.0.0.1:8080/admin/user/info',
+                method: 'get',
+                success: function (backData) {
+                    if (backData.code == 200) {
+                        // 设置用户信息到页面上
+                        $('.user_info img').attr('src', backData.data.userPic);
+                        $('.user_center_link img').attr('src', backData.data.userPic);
+                        $('.user_info span').html('欢迎&nbsp;&nbsp; -' + backData.data.nickname);
+                    }
+                }
+            })
+        }
+
+
     </script>
 </body>
 

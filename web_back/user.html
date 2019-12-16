@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/iconfont.css">
     <link rel="stylesheet" href="css/main.css">
     <script src="js/jquery-1.12.4.min.js"></script>
+    <script src="./js/bootstrap/js/bootstrap.min.js"></script>
 
 </head>
 
@@ -24,47 +25,109 @@
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">用户名称：</label>
                     <div class="col-sm-4">
-                        <input type="text" class="form-control" id="inputEmail3" value="李思思">
+                        <input type="text" class="form-control" id="txtName" name="username" value="">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">昵称：</label>
                     <div class="col-sm-4">
-                        <input type="text" class="form-control" id="inputEmail3" value="思思">
+                        <input type="text" class="form-control" id="txtNickName" name="nickname" value="">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">邮箱：</label>
                     <div class="col-sm-4">
-                        <input type="text" class="form-control" id="inputEmail3" value="lisisi@126.com">
+                        <input type="text" class="form-control" id="txtEmail" name="email" value="">
                     </div>
                 </div>
-                
                 <div class="form-group">
                     <label for="inputPassword3" class="col-sm-2 control-label">用户图标：</label>
                     <div class="col-sm-10">
-                        <img src="images/2.jpg" alt="" class="user_pic">
-                        <input type="file" id="exampleInputFile">
+                        <img src="images/2.jpg" id="headPic" alt="" class="user_pic">
+                        <input type="file" id="upFile" name="userPic">
                     </div>
                 </div>
-
                 <div class="form-group">
-                        <label for="inputEmail3" class="col-sm-2 control-label">密码：</label>
-                        <div class="col-sm-4">
-                            <input type="password" class="form-control" id="inputEmail3" value="12345678">
-                        </div>
+                    <label for="inputEmail3" class="col-sm-2 control-label">密码：</label>
+                    <div class="col-sm-4">
+                        <input type="password" class="form-control" id="inputEmail3" id="txtPwd" value="123456"
+                            name="password">
                     </div>
-               
-    
+                </div>
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
-                        <button type="submit" class="btn btn-success">修改</button>
+                        <button type="button" class="btn btn-success">修改</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
-
+    <!-- bootstrap 模态框的html 代码 -->
+    <div id="myModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">系统提示</h4>
+                </div>
+                <div class="modal-body">
+                    <p>修改成功!!!</p>
+                    <!-- 提示内容区域 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">确定</button>
+                    <!-- <button type="button" class="btn btn-primary" data-dismiss="modal">确定</button> -->
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 </body>
+<script>
+
+    // 0.当页面dom树加载完毕后 执行
+    $(function () {
+        getUserInfo()
+    })
+    // 1.先获取 当前 登录用户的 信息
+    function getUserInfo() {
+        // a.使用$ 的ajax方法 异步请求"当前登录的"用户信息
+        $.ajax({
+            url: 'http://127.0.0.1:8080/admin/user/detail',
+            method: 'get',
+            success: function (backData) {
+                $('#txtName').val(backData.data.username);
+                $('#txtNickName').val(backData.data.nickname);
+                $('#txtPwd').val(backData.data.paasword);//企业开发,一定不能将密码从服务器拿到浏览器
+                $('#txtEmail').val(backData.data.email);
+                $('#headPic').attr('src', backData.data.userPic)
+            }
+        })
+    }
+    // 2.在用户点击修改按钮后,将新的信息 提交到 服务器(服务器就会将数据 更新到 数据库中)
+    // $('.btn-success').on();//1.事件名称不确定时;2.会把当前dom树中 符合选择器需要的元素添加事件
+    //                         on 用来替代 delegate(), bind()
+    $('.btn-success').click(function () {
+        // a.将表单 dom 元素 存入 formdata
+        //     formData 会将 表单中 所有包含name属性的 表单元素 的数据 组成一个数据包(urlencode , form-data)
+        var fd = new FormData($('form')[0]);
+        // b.使用jq ajax 异步提交表单数据
+        $.ajax({
+            url: 'http://127.0.0.1:8080/admin/user/edit',
+            method: 'post',
+            data: fd,
+            contentType: false,//true -> urlencode ; false -> form-data
+            processData: false,//设置ajax方法不要用key=value来对数据编码
+            success: function (backData) {
+                if (backData.code == 200) {
+                    // 3.如果更新成功,需要把 最新的 用户数据更新到 左侧用户显示区和 右上角用户头像处
+                    // 直接调用父页面上的加载用户信息方法
+                    $('#myModal').modal({ keyboard: true })
+                    window.parent.loadUserInfo();
+                }
+            }
+        })
+    })
+</script>
 
 </html>
