@@ -37,7 +37,8 @@
                         <td colspan="3" class="text-center">
                             <!-- data-toggle="modal"属性,一旦设置,那么点击按钮时,就会显示或者隐藏模态框  -->
                             <!-- data-target="#addModal"属性,是设置要显示和隐藏的模态框的id选择器  -->
-                            <a href="#" class="btn btn-success" data-toggle="modal" data-target="#addModal">新增分类</a>
+                            <a href="#" id="btnAdd" class="btn btn-success" data-toggle="modal"
+                                data-target="#addModal">新增分类</a>
                         </td>
                     </tr>
                 </tfoot>
@@ -54,6 +55,8 @@
                 </div>
                 <div class="modal-body">
                     <form id="f1">
+                        <!-- 隐藏域 用来在编辑时 保存 分类id使用 -->
+                        <input type="hidden" name="id" id="txtId">
                         <div class="form-group">
                             <label for="recipient-name" class="control-label">分类名称:</label>
                             <input type="text" class="form-control" id="txtName" name="name">
@@ -66,7 +69,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" id="model_shutoff">关闭</button>
-                    <button type="button" class="btn btn-primary" id="model_add">新增</button>
+                    <button type="button" class="btn btn-primary" id="model_add">确认</button>
                 </div>
             </div>
         </div>
@@ -78,7 +81,7 @@
             <td>{{v.name}}</td>
             <td>{{v.slug}}</td>
             <td class="text-center">
-                <a href="javascript:void(0);"class="btn btn-info btn-xs">编辑</a>
+                <a href="javascript:void(0);" data-id="{{v.id}}" class="btn btn-info btn-xs">编辑</a>
                 <a href="javascript:void(0);" data-id="{{v.id}}" class="btn btn-danger btn-xs">删除</a>
             </td>
         </tr>
@@ -89,6 +92,10 @@
         // 1.页面一显示,就立即加载列表数据, 并 通过模板引擎 显示数据
         // 2.点击新增按钮,显示模态框,点击模态框的新增确认按钮,就将模态框中的数据提交到服务器对应借口保存
         // 3.点击表格中的 删除按钮,就提交数据到 服务器对应借口 删除对应文章分类数据
+        // 4.点击表格中的 编辑按钮
+        //  4.1先显示模态框
+        //  4.2将 原有的数据显示在模态框的表单元素中
+
 
 
         // 1.页面一显示,就立即加载列表数据, 并 通过模板引擎 显示数据
@@ -115,30 +122,54 @@
             $('#addModal').modal('hide');//通过 代码 关闭模态框
         });
 
-        // 2.2新增模态框 按钮点击事件
+        // 2.2新增模态框 确认 按钮点击事件
         $('#model_add').click(function () {
-            // a.获取 数据
-            var strData = $('#f1').serialize();
+            // 判断被点击按钮是否包含一个add类名
+            // 2.2.1如果按钮的class中有add类名,就执行新增操作
+            if ($(this).hasClass('add')) {
+                // a.获取 数据
+                var strData = $('#f1').serialize();
 
-            // b.ajax提交数据
-            $.ajax({
-                url: 'http://127.0.0.1:8080/admin/category/add',
-                type: 'post',
-                data: strData,
-                success: function (backData) {
-                    console.log(backData);
-                    // c.如果新增成功:
-                    //  c1.重新加载当前 页面的文章分类列表
-                    //  c2.关闭模态框
-                    //  c3.清空文本框
-                    if (backData.code == 201) {
-                        loadListData()//重新请求列表数据
-                        $('#addModal').modal('hide');//新增成功要关闭模态框
-                        // 直接清空表单 所有元素的数据
-                        document.getElementById('f1').reset();
+                // b.ajax提交数据
+                $.ajax({
+                    url: 'http://127.0.0.1:8080/admin/category/add',
+                    type: 'post',
+                    data: strData,
+                    success: function (backData) {
+                        console.log(backData);
+                        // c.如果新增成功:
+                        //  c1.重新加载当前 页面的文章分类列表
+                        //  c2.关闭模态框
+                        //  c3.清空文本框
+                        if (backData.code == 201) {
+                            loadListData()//重新请求列表数据
+                            $('#addModal').modal('hide');//新增成功要关闭模态框
+                            // 直接清空表单 所有元素的数据
+                            document.getElementById('f1').reset();
+                        }
                     }
-                }
-            });
+                });
+                // 2.2.2如果按钮的class中没有add类名,就执行编辑操作
+            } else {
+                // a.获取 模态框 表单中 所有的表单元素的键值对
+                var data = $('#f1').serialize();
+                // b.异步发送到接口
+                $.ajax({
+                    url: 'http://127.0.0.1:8080/admin/category/edit',
+                    type: 'post',
+                    dataType: 'json',
+                    data: data,
+                    success: function (backData) {
+                        if (backData.code == 200) {
+                            // a.关闭model窗口
+                            $('#addModal').modal('hide');
+                            // b.重新请求 分类列表数据(可以直接把文本框内容设置给单元格)
+                            alert(backData.msg);
+                            loadListData()
+                        }
+                    }
+                });
+            }
         });
 
         // 3.点击表格中的 删除按钮,就提交数据到 服务器对应借口 删除对应文章分类数据
@@ -169,20 +200,37 @@
             }
         })
 
+        // 4.点击表格中的编辑按钮
+        $('tbody').on('click', '.btn-info', function () {
 
+            // 4.1显示 模态框
+            $('#addModal').modal('show');
+            // a.将 模态框的提示改成修改分类
+            $('.modal-title', '#addModal').text('修改分类');
+            // b.将模态框的确认按钮删除类名 add
+            $('#model_add').removeClass('add');
+            //  将当前被点击按钮所在行的第一个和第二个内容拿出
+            var fristCol = $(this).parents('tr').children('td:eq(0)');
+            var secondCol = $(this).parents('tr').children('td:eq(1)');
 
+            // 将两个单元格中的内容 设置给模态框中的文本框
+            $('#txtName').val(fristCol.text());
+            $('#txtSlug').val(secondCol.text());
+            // 将被点击编辑按钮的data-id属性的值设置给模态框中的隐藏域
+            // this.getAttribute('data-id');
+            $('#txtId').val(this.dataset.id)
+        })
+
+        // 5.为 显示新增按钮 添加点击事件
+        $('#btnAdd').click(function () {
+            $('#model_add').addClass('add')
+        })
 
         $('#addModal').modal({
             show: false,
             backdrop: false
         });
 
-        $('.category_table').delegate('a', 'click', function () {
-            if ($(this).hasClass('btn-info')) {
-                $('#addModal .modal-title').html('修改分类名称');
-                $('#addModal').modal('show');
-            }
-        })      
     </script>
 
 </body>
