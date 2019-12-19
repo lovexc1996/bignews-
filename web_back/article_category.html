@@ -124,6 +124,8 @@
 
         // 2.2新增模态框 确认 按钮点击事件
         $('#model_add').click(function () {
+            // a.将 模态框的提示改成修改分类
+            $('.modal-title', '#addModal').text('新增分类');
             // 判断被点击按钮是否包含一个add类名
             // 2.2.1如果按钮的class中有add类名,就执行新增操作
             if ($(this).hasClass('add')) {
