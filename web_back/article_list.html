@@ -113,7 +113,7 @@
             <td class="text-center">{{v.date}}</td>
             <td class="text-center">{{v.state}}</td>
             <td class="text-center">
-                <a href="javascript:void(0);" data-id="{{v.id}}" class="btn btn-default btn-xs">编辑</a>
+                <a href="./article_edit.html?id={{v.id}};" class="btn btn-default btn-xs">编辑</a>
                 <a href="javascript:void(0);" data-id="{{v.id}}" class="btn btn-danger btn-xs">删除</a>
             </td>
         </tr>
@@ -121,39 +121,37 @@
     </script>
     <!-- 表格行 模板引擎 end -->
 
-    <!-- 表格行 模板引擎 begin -->
+    <!-- 分类下拉框 模板引擎 begin -->
     <script id="optionTepmlate" type="text/html">
         <option value="">未分类</option>
         {{each data v}}
         <option value="{{v.id}}">{{v.name}}</option>
         {{/each}}
     </script>
-    <!-- 表格行 模板引擎 end -->
+    <!-- 分类下拉框 模板引擎 end -->
     <script>
+        // 页面 加载完资源后
         $(function () {
-            loadList();
+            // 1.生成 文章分类 下拉框
             loadArtCateList();
-
+            // 2.加载 第一页 数据
+            loadList(1);
         })
-        // 1.业务目标:加载文章列表数据(type - 文章分类id , state - 文章发布状态)
-        // function loadList(queryStr) {
-        function loadList( page = 1,type = "", state = "",perpage = 10) {
+        //1.业务目标：加载 文章列表数据 (type - 文章分类id , state - 文章发布状态)
+        //      pageIndex = 页码
+        //      pageSize = 页容量
+        function loadList(page = 1, perpage = 10) {
             $.ajax({
                 url: 'http://127.0.0.1:8080/admin/article/query',
                 type: 'get',
-                // data:'perpage=10&'+queryStr,
-                data: {
-                    perpage: perpage,
-                    type: type,
-                    state: state,
-                    page: page,
-                },
+                data: 'perpage=' + perpage + '&type=' + selCateId + '&state=' + selStaName + '&page=' + page,
                 success: function (backData) {
                     if (backData.code == 200) {
                         // 调用模板引擎方法遍历数据中的数据,根据模板字符串生成n行表格行html代码
                         $('.table>tbody').html(template('trTepmlate', backData));
-                        // 生成页码条(点击页码调用的函数 - 调用时 会把被点击的页码传入函数)
-                        makePageBar(loadList,'pageDiv',page,perpage,perpage,backData.data.totalCount)
+                        // 生成 页码条(点击页码调用的函数-调用时 会把 被点击的页码 传进去)
+                        //      （方法对象 , 页码条容器id ， 当前页码 ， 页容量 ， 页码组容量 ， 总行数）
+                        makePageBar(loadList, 'pageDiv', page, perpage, 8, backData.data.totalCount)
                     }
                 }
             });
@@ -171,19 +169,20 @@
                 }
             });
         }
+        // 全局变量：筛选文章的条件 --------
+        var selCateId = ""; // 分类 id  |
+        var selStaName = ""; // 发布状态  |
+        // -------------------------------
 
         // 2.业务目标:筛选 按钮添加点击事件,实则数据按照分类和状态筛选
         $('#btnSearch').click(function () {
             // var dataStr = $('#f1').serialize();
             // loadList(dataStr)
-            var selCateId = $('#selCategory').val()
-            var selStaName = $('#selStatus').val()
-            loadList(selCateId, selStaName)
+           selCateId = $('#selCategory').val()//分类id
+            selStaName = $('#selStatus').val()//发布状态
+            // 调用时,需要传入页码,并传入查询条件
+            loadList(1);
         })
-
-
-
-
 
         // 设置左侧菜单
         $('#release_btn').click(function () {

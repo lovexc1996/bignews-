@@ -131,7 +131,6 @@
             if ($(this).hasClass('add')) {
                 // a.获取 数据
                 var strData = $('#f1').serialize();
-
                 // b.ajax提交数据
                 $.ajax({
                     url: 'http://127.0.0.1:8080/admin/category/add',
@@ -201,10 +200,9 @@
                 });
             }
         })
-
+        
         // 4.点击表格中的编辑按钮
         $('tbody').on('click', '.btn-info', function () {
-
             // 4.1显示 模态框
             $('#addModal').modal('show');
             // a.将 模态框的提示改成修改分类
@@ -222,11 +220,11 @@
             // this.getAttribute('data-id');
             $('#txtId').val(this.dataset.id)
         })
-
         // 5.为 显示新增按钮 添加点击事件
         $('#btnAdd').click(function () {
             $('#model_add').addClass('add')
         })
+
 
         $('#addModal').modal({
             show: false,

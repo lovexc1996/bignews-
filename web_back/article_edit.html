@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>文章列表</title>
+    <title>文章编辑页面</title>
     <link rel="stylesheet" href="js/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/iconfont.css">
@@ -15,6 +15,7 @@
     <script src="js/jedate/js/jedate.js"></script>
     <script src="js/tinymce/js/tinymce/tinymce.min.js"></script>
     <script src="js/tinymce/js/tinymce_setup.js"></script>
+    <script src="js/template-web.js"></script>
 </head>
 
 <body>
@@ -23,29 +24,25 @@
             文章编辑
         </div>
         <div class="container-fluid common_con">
-            <form class="form-horizontal article_form">
+            <form id="f1" class="form-horizontal article_form">
+                <input type="hidden" id="hidId" name="id">
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">文章标题：</label>
                     <div class="col-sm-10">
-                        <input type="email" class="form-control" id="inputEmail3" value="文章标题文字">
+                        <input type="text" class="form-control" id="title" name="title" value="文章标题文字">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputPassword3" class="col-sm-2 control-label">文章封面：</label>
                     <div class="col-sm-10">
-                        <img src="images/pic06.jpg" class="article_cover">
-                        <input type="file" id="exampleInputFile">
+                        <img src="images/pic06.jpg" class="article_cover" id="imgCover">
+                        <input type="file" id="exampleInputFile" name="cover">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">文章类别：</label>
                     <div class="col-sm-4">
-                        <select class="form-control">
-                            <option>类别一</option>
-                            <option>类别二</option>
-                            <option>类别三</option>
-                            <option selected>类别四</option>
-                            <option>类别五</option>
+                        <select id="selCate" name="categoryId" class="form-control">
                         </select>
                     </div>
                 </div>
@@ -54,7 +51,7 @@
                     <div class="col-sm-4">
 
                         <div class="input-group">
-                            <input type="text" class="form-control" value="2019-05-17" id="dateinput">
+                            <input type="text" class="form-control" value="2019-05-17" id="dateinput" name="date">
                             <span class="input-group-btn">
                                 <button class="btn btn-default" type="button"
                                     onclick="jeDate('#dateinput',{trigger:false,format: 'YYYY-MM-DD'})"><i
@@ -66,12 +63,12 @@
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">文章内容：</label>
                     <div class="col-sm-10">
-                        <input type="text" class="form-control" id="rich_content" name="content" placeholder="文章内容" value="文章内容">
+                        <textarea class="form-control" id="rich_content" placeholder="文章内容"></textarea>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
-                        <button type="submit" class="btn btn-success">修改</button>
+                        <button id="btnOk" type="button" class="btn btn-success">修改</button>
                     </div>
                 </div>
             </form>
@@ -79,5 +76,84 @@
     </div>
 
 </body>
+<script id="optionTepmlate" type="text/html">
+    <option value="">未分类</option>
+    {{each data v}}
+    <option value="{{v.id}}">{{v.name}}</option>
+    {{/each}}
+</script>
+<script>
+    // 1.加载文章分类 下拉框的数据  
+    $(function () {
+        loadArtCateList();
+        setTimeout(() => {
+            queryArticle()
+        }, 200);
+    })
+    //加载分类下拉框数据函数(原生代码)
+    // 1.1业务目标:加载文章分类 下拉框数据  
+    function loadArtCateList() {
+        $.ajax({
+            url: 'http://127.0.0.1:8080/admin/category/list',
+            type: 'get',
+            success: function (backData) {
+                if (backData.code == 200) {
+                    // 调用模板引擎方法遍历数据中的数据,根据模板字符串生成n行表格行html代码
+                    $('#selCate').html(template('optionTepmlate', backData));
+                }
+            }
+        });
+    }
+
+
+    // 2.获取 要编辑的文章内容
+    // a.先通过js获取url的id值
+    // b.异步请求服务器借口,根据id查询文章内容返回
+    // c.通过js将文章各个内容设置给页面表单不同的元素中
+    function queryArticle() {
+        console.log(window.location.search);
+        var aId = window.location.search.split('=')[1]
+        console.log(aId);
+        $.ajax({
+            url: 'http://127.0.0.1:8080/admin/article/search',
+            type: 'get',
+            data: { id: aId },
+            success: function (backData) {
+                $('#txtTitle').val(backData.data.title);
+                $('#hidId').val(backData.data.id);
+                $('#imgCover').attr('src', backData.data.cover)
+                $('#selCate').val(backData.data.categoryId);
+                $('#dateinput').val(backData.data.date);
+                // 通过富文本编辑器的语法 设置文章内容
+                tinyMCE.activeEditor.setContent(backData.data.content);
+            }
+        });
+
+    }
+
+    // 3.确认修改操作
+    // a.通过formData获取页面上所有数据
+    // b.异步将formData数据发送到服务器编辑文章接口
+    // c.当求改成功后,调回文章列表窗口
+    $('#btnOk').click(function () {
+        var fd = new FormData($('#f1')[0]);
+
+        var content = tinyMCE.activeEditor.getContent();
+        fd.append('content', content)
+        $.ajax({
+            url: 'http://127.0.0.1:8080/admin/article/edit',
+            type: 'post',
+            data: fd,
+            contentType: false,
+            processData: false,
+            success: function (backData) {
+                if (backData.code == 200) {
+                    alert('修改成功');
+                    window.location = './article_list.html';
+                }
+            }
+        });
+    })
+</script>
 
 </html>
